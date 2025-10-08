@@ -41,4 +41,4 @@ USER botuser
 EXPOSE 8080
 
 # Comando padrão
-CMD ["python3", "opportunity_monitor_with_executor.py"]
+CMD ["python3", "opportunity_monitor_fixed.py"]
