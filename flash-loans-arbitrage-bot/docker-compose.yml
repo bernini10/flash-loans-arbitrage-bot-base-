@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  flash-arbitrage-bot:
+    build: .
+    container_name: flash-arbitrage-bot
+    restart: unless-stopped
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - ALCHEMY_API_KEY=${ALCHEMY_API_KEY}
+      - PRIVATE_KEY=${PRIVATE_KEY}
+      - NODE_ENV=production
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    networks:
+      - arbitrage-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import requests; requests.get('http://localhost:8080/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Serviço de monitoramento opcional
+  monitoring:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - arbitrage-network
+    profiles:
+      - monitoring
+
+  # Dashboard opcional
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    networks:
+      - arbitrage-network
+    profiles:
+      - monitoring
+
+networks:
+  arbitrage-network:
+    driver: bridge
+
+volumes:
+  grafana-storage:
